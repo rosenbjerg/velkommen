@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>velkommen - easy localisation</title>
+    <style>
+        table, td * {
+            width: 100%;
+        }
+        td i {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+<h2>velkommen → welcome</h2>
+<h3>easy localisation</h3>
+<input type="file" id="inputFile" required>
+<select id="languageFrom" name="languageFrom" required></select>
+<select id="languageTo" name="languageTo" required></select>
+<button id="start">Start</button>
+<button style="display:none;" id="reset">Reset</button>
+<button style="display:none;" id="download">Download</button>
+<div id="warning" style="display: none">Google Translate API threshold hit (max 100/hour)</div>
+<table id="entries"></table>
+</body>
+<script>
+    const languageFrom = document.getElementById('languageFrom');
+    const languageTo = document.getElementById('languageTo');
+    const inputFile = document.getElementById('inputFile');
+    const start = document.getElementById('start');
+    const reset = document.getElementById('reset');
+    const entries = document.getElementById('entries');
+    const warning = document.getElementById('warning');
+    const download = document.getElementById('download');
+
+    start.onclick = async () => {
+        inputFile.style.display = 'none';
+        languageFrom.style.display = 'none';
+        languageTo.style.display = 'none';
+        start.style.display = 'none';
+        reset.style.display = 'unset';
+        download.style.display = 'unset';
+        const content = JSON.parse(await inputFile.files[0].text());
+        entries.innerHTML =
+`<tr>
+    <td align="right"><b>${languageFrom.options[languageFrom.selectedIndex].innerText}</b></td>
+    <td><b>${languageTo.options[languageTo.selectedIndex].innerText}</b></td>
+</tr>
+${Object.keys(content).map(key =>
+`<tr>
+    <td align="right"><i>${key}</i></td>
+    <td><input type="text" data-key="${key}" data-source="${content[key]}" placeholder="${content[key]}"></td>
+</tr>`).join('')}`;
+        autotranslate();
+    };
+
+    download.onclick = downloadCurrent;
+
+    reset.onclick = () => {
+        reset.style.display = 'none';
+        download.style.display = 'none';
+        inputFile.style.display = 'unset';
+        start.style.display = 'unset';
+        languageFrom.style.display = 'unset';
+        languageTo.style.display = 'unset';
+        entries.innerHTML = '';
+        inputFile.reset();
+        languageTo.reset();
+    };
+
+
+
+    fetch('languages.json').then(response => response.json()).then(languages => {
+        const html = languages.map(lang => `<option value="${lang[0]}">${lang[1]}</option>`);
+        languageFrom.innerHTML = html;
+        languageTo.innerHTML = html;
+    });
+
+    function downloadCurrent() {
+        const rows = Array.from(entries.children[0].children);
+        const full = rows.reduce((acc, tr) => {
+            const input = tr.children[1].children[0];
+            acc[input.dataset.key] = input.value;
+            return acc;
+        });
+        const uri = window.URL.createObjectURL(new Blob([JSON.stringify(full, null, 2)], {type: 'text/plain'}));
+        const a = document.createElement('a');
+        a.download = inputFile.files[0].name.replace(languageFrom.value, languageTo.value);
+        a.href = uri;
+        document.body.append(a);
+        a.click();
+        a.remove();
+    }
+    async function translate(sourceLang, targetLang, sourceTexts) {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${sourceTexts.map(text => encodeURI(text)).join(encodeURI('\n'))}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            warning.style.display = 'block';
+            return '';
+        }
+        return await response.json().then(result => result[0].map(t => t[0].replace(/\n$/, '')));
+    }
+    async function autotranslate() {
+        const inputs = Array.from(entries.children[0].children).slice(1).map(row => row.children[1].children[0]);
+        const sourceTexts = inputs.map(input => input.dataset.source);
+        const translations = await translate(languageFrom.value, languageTo.value, sourceTexts);
+        inputs.forEach((input, index) => input.value = translations[index]);
+    }
+</script>
+</html>

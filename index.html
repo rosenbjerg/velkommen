@@ -3,18 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <title>velkommen - easy localisation</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
     <style>
-        table, td * {
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #424242;
+            color: #FAFAFA;
+            text-align: center;
+        }
+        table {
+            margin: auto;
+            padding-top: 20px;
+            border-spacing: 4px 8px;
+        }
+        tr {
+            margin-top: 8px;
+        }
+        td * {
             width: 100%;
         }
         td i {
             text-align: right;
         }
+        td input {
+            width: 400px;
+        }
+        input, button, select {
+            color: #EEEEEE;
+            font-family: 'Roboto', sans-serif;
+            border: 2px solid black;
+            border-radius: 3px;
+            background-color: #616161;
+            box-shadow: 2px 2px 4px 0px rgba(0,0,0,0.75);
+        }
+        input {
+            padding-left: 2px;
+        }
     </style>
 </head>
 <body>
-<h2>velkommen → welcome</h2>
-<h3>easy localisation</h3>
+<h1>velkommen → welcome</h1>
+<h2>easy localisation</h2>
+<h4>simply select your JSON-file containing translations, select which language it is in and which language you need translations for, and press start</h4>
+<h5>google translate will get you started, and then it is up to you to correct the auto-translations</h5>
 <input type="file" id="inputFile" required>
 <select id="languageFrom" name="languageFrom" required></select>
 <select id="languageTo" name="languageTo" required></select>
@@ -44,16 +75,20 @@
         const content = JSON.parse(await inputFile.files[0].text());
         entries.innerHTML =
 `<tr>
-    <td align="right"><b>${languageFrom.options[languageFrom.selectedIndex].innerText}</b></td>
-    <td><b>${languageTo.options[languageTo.selectedIndex].innerText}</b></td>
+    <td align="right"><b>${currentText(languageFrom)}</b></td>
+    <td><b>${currentText(languageTo)}</b></td>
 </tr>
 ${Object.keys(content).map(key =>
 `<tr>
-    <td align="right"><i>${key}</i></td>
-    <td><input type="text" data-key="${key}" data-source="${content[key]}" placeholder="${content[key]}"></td>
+    <td align="right">${key}</td>
+    <td colspan="2"><input type="text" data-key="${key}" data-source="${content[key]}" title="${currentText(languageFrom)}: ${content[key]}" placeholder="${content[key]}"></td>
 </tr>`).join('')}`;
         autotranslate();
     };
+
+    function currentText(select) {
+        return select.options[select.selectedIndex].innerText;
+    }
 
     download.onclick = () => {
         downloadCurrent();

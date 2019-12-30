@@ -55,9 +55,14 @@ ${Object.keys(content).map(key =>
         autotranslate();
     };
 
-    download.onclick = downloadCurrent;
+    download.onclick = () => {
+        downloadCurrent();
+        resetElements();
+    };
 
-    reset.onclick = () => {
+    reset.onclick = resetElements;
+
+    function resetElements() {
         reset.style.display = 'none';
         download.style.display = 'none';
         inputFile.style.display = 'unset';
@@ -65,11 +70,8 @@ ${Object.keys(content).map(key =>
         languageFrom.style.display = 'unset';
         languageTo.style.display = 'unset';
         entries.innerHTML = '';
-        inputFile.reset();
         languageTo.reset();
-    };
-
-
+    }
 
     fetch('languages.json').then(response => response.json()).then(languages => {
         const html = languages.map(lang => `<option value="${lang[0]}">${lang[1]}</option>`);

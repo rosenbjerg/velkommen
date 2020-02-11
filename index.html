@@ -3,41 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>velkommen - easy localisation</title>
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
     <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #424242;
-            color: #FAFAFA;
             text-align: center;
-        }
-        table {
-            margin: auto;
-            padding-top: 20px;
-            border-spacing: 4px 8px;
-        }
-        tr {
-            margin-top: 8px;
-        }
-        td * {
-            width: 100%;
-        }
-        td i {
-            text-align: right;
-        }
-        td input {
-            width: 400px;
-        }
-        input, button, select {
-            color: #EEEEEE;
-            font-family: 'Roboto', sans-serif;
-            border: 2px solid black;
-            border-radius: 3px;
-            background-color: #616161;
-            box-shadow: 2px 2px 4px 0px rgba(0,0,0,0.75);
-        }
-        input {
-            padding-left: 2px;
         }
     </style>
 </head>
@@ -47,13 +18,18 @@
 <h4>simply select your JSON-file containing translations, select which language it is in and which language you need translations for, and press start</h4>
 <h5>google translate will get you started, and then it is up to you to correct the auto-translations</h5>
 <input type="file" id="inputFile" required>
-<select id="languageFrom" name="languageFrom" required></select>
-<select id="languageTo" name="languageTo" required></select>
-<button id="start">Start</button>
-<button style="display:none;" id="reset">Reset</button>
-<button style="display:none;" id="download">Download</button>
+<span class="form-group">
+    <select class="form-select col-2" id="languageFrom" name="languageFrom" required></select>
+</span>
+<span class="form-group">
+    <select class="form-select col-2" id="languageTo" name="languageTo" required></select>
+</span>
+
+<button class="btn btn-primary" id="start">Start</button>
+<button class="btn" style="display:none;" id="reset">Reset</button>
+<button class="btn btn-primary" style="display:none;" id="download">Download</button>
 <div id="warning" style="display: none">Google Translate API threshold hit (max 100/hour)</div>
-<table id="entries"></table>
+<div class="container" id="entries"></div>
 </body>
 <script>
     const languageFrom = document.getElementById('languageFrom');
@@ -74,15 +50,15 @@
         download.style.display = 'unset';
         const content = JSON.parse(await inputFile.files[0].text());
         entries.innerHTML =
-`<tr>
-    <td align="right"><b>${currentText(languageFrom)}</b></td>
-    <td><b>${currentText(languageTo)}</b></td>
-</tr>
+`<div class="columns">
+  <div align="right" class="column col-4"><b>${currentText(languageFrom)}</b></div>
+  <div class="column col-8"><b>${currentText(languageTo)}</b></div>
+</div>
 ${Object.keys(content).map(key =>
-`<tr>
-    <td align="right">${key}</td>
-    <td colspan="2"><input type="text" data-key="${key}" data-source="${content[key]}" title="${currentText(languageFrom)}: ${content[key]}" placeholder="${content[key]}"></td>
-</tr>`).join('')}`;
+`<div class="columns">
+  <div align="right" class="column col-4">${key}</div>
+  <div class="column col-8"><input class="form-input" type="text" data-key="${key}" data-source="${content[key]}" title="${currentText(languageFrom)}: ${content[key]}" placeholder="${content[key]}"></div>
+</div>`).join('')}`;
         autotranslate();
     };
 
@@ -139,7 +115,7 @@ ${Object.keys(content).map(key =>
         return await response.json().then(result => result[0].map(t => t[0].replace(/\n$/, '')));
     }
     async function autotranslate() {
-        const inputs = Array.from(entries.children[0].children).slice(1).map(row => row.children[1].children[0]);
+        const inputs = Array.from(entries.children).slice(1).map(row => row.children[1].children[0]);
         const sourceTexts = inputs.map(input => input.dataset.source);
         const translations = await translate(languageFrom.value, languageTo.value, sourceTexts);
         inputs.forEach((input, index) => input.value = translations[index]);
